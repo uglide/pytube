@@ -30,9 +30,9 @@ class YouTube(object):
 
         parts = urlparse(url)
         if hasattr(parts, 'query'):
-            query_str = parse_qs(parts.query)
-            if 'v' in query_str and len(query_str['v']) is 1:
-                return query_str['v'][0]
+            query = parse_qs(parts.query)
+            if 'v' in query and len(query['v']) is 1:
+                return query['v'][0]
 
     def mget_videos_by_id(self, video_id):
         """multi-get (Redis-nomenclature) returns a list of object
@@ -69,15 +69,15 @@ class YouTube(object):
             return ''.join([url, paths, '?', urlencode(query)])
         return ''.join([url, paths])
 
-    def _parse_query_string(self, qs):
+    def _parse_query_str(self, query):
         """Parses query string to a coerced datatype.
 
-        :param qs: A uri query string
+        :param query: A uri query string
         :returns: a flattened dict representation of a query string
         """
 
         d = {}
-        for key, val in parse_qs(qs).iteritems():
+        for key, val in parse_qs(query).iteritems():
             d[key] = (val if len(val) > 1 else val[0])
         return d
 
@@ -97,10 +97,10 @@ class YouTube(object):
         if response.getcode() != 200:
             raise
 
-        metadata = self._parse_query_string(response.read())
+        metadata = self._parse_query_str(response.read())
 
-        stream_map = (self._parse_query_string(fsm) for fsm in
-                      metadata['url_encoded_fmt_stream_map'].split(','))
+        stream_map = [self._parse_query_str(fsm) for fsm in
+                      metadata['url_encoded_fmt_stream_map'].split(',')]
         for fsm in stream_map:
             fsm.update({'url': '{url}&signature={sig}'.format(**fsm)})
 
