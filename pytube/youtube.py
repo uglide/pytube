@@ -53,7 +53,7 @@ class YouTube(object):
 
         return self._request(video_id)
 
-    def _urlize(self, url, *paths, **query):
+    def _url(self, url, *paths, **query):
         """Lazily constructs a url given optional paths and query string as
         keyword args.
 
@@ -90,7 +90,7 @@ class YouTube(object):
         :returns: a dict representation of the metadata
         """
 
-        url = self._urlize(BASE_URL, asv=3, el='detailpage', hl='en_US',
+        url = self._url(BASE_URL, asv=3, el='detailpage', hl='en_US',
                            video_id=video_id)
 
         response = urlopen(url)
