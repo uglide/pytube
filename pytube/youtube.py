@@ -70,7 +70,7 @@ class YouTube(object):
         return ''.join([url, paths])
 
     def _parse_query_str(self, query):
-        """Parses query string to a coerced datatype.
+        """Parse a query given as a string argument.
 
         :param query: A uri query string
         :returns: a flattened dict representation of a query string
