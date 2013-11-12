@@ -7,33 +7,6 @@ from os.path import join
 
 BASE_URL = 'http://www.youtube.com/get_video_info'
 
-#YouTube quality and codecs id map.
-#source: http://en.wikipedia.org/wiki/YouTube#Quality_and_codecs
-ITAGS = {
-    5: ("flv", "240p", "H.263", None, 64),
-    6: ("flv", "270p", "H.263", None, 64),
-    34: ("flv", "360p", "H.264", "Main", 128),
-    35: ("flv", "480p", "H.264", "Main", 128),
-    36: ("3gp", "240p", "MPEG-4", "Simple", 38),
-    13: ("3gp", None, "MPEG-4", None, None),
-    17: ("3gp", "144p", "MPEG-4", "Simple", 24),
-    18: ("mp4", "360p", "H.264", "Baseline", 96),
-    22: ("mp4", "720p", "H.264", "High", 192),
-    37: ("mp4", "1080p", "H.264", "High", 192),
-    38: ("mp4", "3072p", "H.264", "High", 192),
-    82: ("mp4", "360p", "H.264", "3D", 96),
-    83: ("mp4", "240p", "H.264", "3D", 96),
-    84: ("mp4", "720p", "H.264", "3D", 152),
-    85: ("mp4", "520p", "H.264", "3D", 152),
-    43: ("webm", "360p", "VP8", None, 128),
-    44: ("webm", "480p", "VP8", None, 128),
-    45: ("webm", "720p", "VP8", None, 192),
-    46: ("webm", "1080p", "VP8", None, 192),
-    100: ("webm", "360p", "VP8", "3D", 128),
-    101: ("webm", "360p", "VP8", "3D", 192),
-    102: ("webm", "720p", "VP8", "3D", 192)
-}
-
 
 class YouTube(object):
 
@@ -65,7 +38,7 @@ class YouTube(object):
         """Parses query string to a coerced datatype.
 
         :param qs: A uri query string
-        :returns: a flattened dict representation of a query sting
+        :returns: a flattened dict representation of a query string
         """
 
         d = {}
