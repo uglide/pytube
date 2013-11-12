@@ -9,12 +9,25 @@ BASE_URL = 'http://www.youtube.com/get_video_info'
 
 
 class YouTube(object):
+    """PyTube: Lightweight wrapper for downloading YouTube videos
+    """
 
     def __init__(self, url):
+        """Initialize class instance.
+
+        :param url: url to YouTube video
+        :returns: instance of YouTube class
+        """
         self.url = url
         self.video_id = self.get_id_by_url(url)
 
     def get_id_by_url(self, url):
+        """Extracts the video Id from a YouTube url.
+
+        :param video_id: YouTube url
+        :returns: string video Id
+        """
+
         parts = urlparse(url)
         if hasattr(parts, 'query'):
             query_str = parse_qs(parts.query)
@@ -22,12 +35,34 @@ class YouTube(object):
                 return query_str['v'][0]
 
     def mget_videos_by_id(self, video_id):
+        """multi-get (Redis-nomenclature) returns a list of object
+        representation of YouTube videos for a given video Id.
+
+        :param video_id: YouTube video Id
+        :returns: list of Video objects
+        """
+
         raise NotImplemented
 
     def get_metadata_by_id(self, video_id):
+        """Returns the YouTube meta data for a given Id.
+
+        :param video_id: YouTube video Id
+        :returns: dict representation of the meta data
+        """
+
         return self._request(video_id)
 
     def _urlize(self, url, *paths, **query):
+        """Lazily constructs a url given optional paths and query string as
+        keyword args.
+
+        :param url: base url (e.g.: http://example.com)
+        :param paths: optional path(s) to append to the url
+        :param query: optional query string as keyword args
+        :returns: a properly formed url
+        """
+
         paths = (join(*paths) if paths else '')
 
         if query:
