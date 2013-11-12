@@ -99,8 +99,8 @@ class YouTube(object):
 
         metadata = self._parse_query_string(response.read())
 
-        stream_map = [self._parse_query_string(fsm) for fsm in
-                      metadata['url_encoded_fmt_stream_map'].split(',')]
+        stream_map = (self._parse_query_string(fsm) for fsm in
+                      metadata['url_encoded_fmt_stream_map'].split(','))
         for fsm in stream_map:
             fsm.update({'url': '{url}&signature={sig}'.format(**fsm)})
 
