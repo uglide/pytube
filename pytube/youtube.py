@@ -15,8 +15,7 @@ class YouTube(object):
     def __init__(self, url):
         """Initialize class instance.
 
-        :param url: url to YouTube video
-        :returns: instance of YouTube class
+        :param url: web address to YouTube video
         """
         self.url = url
         self.video_id = self.get_id_by_url(url)
@@ -30,9 +29,8 @@ class YouTube(object):
 
         parts = urlparse(url)
         if hasattr(parts, 'query'):
-            query = parse_qs(parts.query)
-            if 'v' in query and len(query['v']) is 1:
-                return query['v'][0]
+            qs = self._parse_qs(parts.query)
+            return qs.get('v')
 
     def mget_videos_by_id(self, video_id):
         """multi-get (Redis-nomenclature) returns a list of object
@@ -53,31 +51,31 @@ class YouTube(object):
 
         return self._request(video_id)
 
-    def _url(self, url, *paths, **query):
+    def _url(self, url, *paths, **qs):
         """Lazily constructs a url given optional paths and query string as
         keyword args.
 
         :param url: base url (e.g.: http://example.com)
         :param paths: optional path(s) to append to the url
-        :param query: optional query string as keyword args
+        :param qs: optional query string as keyword args
         :returns: a properly formed url
         """
 
         paths = (join(*paths) if paths else '')
 
-        if query:
-            return ''.join([url, paths, '?', urlencode(query)])
+        if qs:
+            return ''.join([url, paths, '?', urlencode(qs)])
         return ''.join([url, paths])
 
-    def _parse_query_str(self, query):
+    def _parse_qs(self, qs):
         """Parse a query given as a string argument.
 
-        :param query: A uri query string
+        :param qs: uri query string
         :returns: a flattened dict representation of a query string
         """
 
         d = {}
-        for key, val in parse_qs(query).iteritems():
+        for key, val in parse_qs(qs).iteritems():
             d[key] = (val if len(val) > 1 else val[0])
         return d
 
@@ -91,15 +89,15 @@ class YouTube(object):
         """
 
         url = self._url(BASE_URL, asv=3, el='detailpage', hl='en_US',
-                           video_id=video_id)
+                        video_id=video_id)
 
         response = urlopen(url)
         if response.getcode() != 200:
             raise
 
-        metadata = self._parse_query_str(response.read())
+        metadata = self._parse_qs(response.read())
 
-        stream_map = [self._parse_query_str(fsm) for fsm in
+        stream_map = [self._parse_qs(fsm) for fsm in
                       metadata['url_encoded_fmt_stream_map'].split(',')]
         for fsm in stream_map:
             fsm.update({'url': '{url}&signature={sig}'.format(**fsm)})
