@@ -1,5 +1,5 @@
 PyTube: YouTube Wrapper for Minimalists
-========================================
+----------------------------------------
 
 PyTube is an Apache2 Licensed lightweight YouTube wrapper, written in Python,
 for minimalists.
