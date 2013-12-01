@@ -1,3 +1,4 @@
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 """
@@ -8,12 +9,18 @@
 .. moduleauthor:: Nick Ficano <nficano@gmail.com>
 """
 
+from mimetypes import guess_extension
+from os.path import join
 from urllib import urlencode
 from urllib2 import urlopen
 from urlparse import urlparse, parse_qs
-from os.path import join
+
+import re
 
 BASE_URL = 'http://www.youtube.com/get_video_info'
+
+MIMETYPE_RE = re.compile('(video\/[A-Za-z0-9-_]*)')
+CODECS_RE = re.compile('.*codecs\=\"(.*)\"')
 
 
 class YouTube(object):
@@ -60,8 +67,12 @@ class YouTube(object):
         :returns: Video objects
         :rtype: list
         """
-
-        raise NotImplemented
+        videos = []
+        metadata = self.get_metadata_by_id(video_id)['fmt_stream_map']
+        for stream_map in metadata:
+            vid = Video(stream_map)
+            videos.append(vid)
+        return videos
 
     def get_metadata_by_id(self, video_id):
         """
@@ -158,8 +169,45 @@ class YouTube(object):
         metadata['fmt_stream_map'] = stream_map
         return metadata
 
+
+class Video(object):
+    """YouTube video instances created by the YouTube factory class.
+    """
+
+    def __init__(self, stream_map):
+        """Initialize instance of Video class
+
+        :param stream_map: The url decoded fmt_stream_map.
+        :type url: dict
+        """
+
+        self._raw_stream_map = stream_map
+        self.itag = stream_map.get('itag')
+        self.url = stream_map.get('url')
+        self.quality = stream_map.get('quality')
+        self.fallback_host = stream_map.get('fallback_host')
+
+        self.content_type = stream_map.get('type')
+        self.mimetype = self._get_mimetype(self.content_type)
+        self.codecs = self._get_codecs(self.content_type)
+
+    def _get_mimetype(self, content_type):
+        mimetype = MIMETYPE_RE.match(content_type)
+        if mimetype:
+            return mimetype.group()
+
+    def _get_codecs(self, content_type):
+        codecs = CODECS_RE.match(content_type)
+        if codecs:
+            return codecs.group()
+
+    def __repr__(self):
+        return '<Video: "{mimetype}" quality: {quality}>'.format(
+            mimetype=self.mimetype, quality=self.quality)
+
+
 if __name__ == '__main__':
     from pprint import pprint
     yt = YouTube("http://www.youtube.com/watch?v=Ik-RsDGPI5Y")
     video_id = yt.video_id
-    pprint(yt.get_metadata_by_id(video_id))
+    print yt.mget_videos_by_id(video_id)
