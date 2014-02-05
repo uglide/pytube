@@ -9,23 +9,23 @@
 .. moduleauthor:: Nick Ficano <nficano@gmail.com>
 """
 
-from mimetypes import guess_extension
+#from mimetypes import guess_extension
 from os.path import join
 from urllib import urlencode
 from urllib2 import urlopen
 from urlparse import urlparse, parse_qs
 
-import re
+from video import Video
 
 BASE_URL = 'http://www.youtube.com/get_video_info'
-
-MIMETYPE_RE = re.compile('(video\/[A-Za-z0-9-_]*)')
-CODECS_RE = re.compile('.*codecs\=\"(.*)\"')
 
 
 class YouTube(object):
     """PyTube: Lightweight wrapper for downloading YouTube videos
     """
+
+    url = None
+    video_id = None
 
     def __init__(self, url):
         """
@@ -34,6 +34,8 @@ class YouTube(object):
         :param url: web address to YouTube video
         :type url: str
         """
+        if not url:
+            return
         self.url = url
         self.video_id = self.get_id_by_url(url)
 
@@ -67,12 +69,16 @@ class YouTube(object):
         :returns: Video objects
         :rtype: list
         """
+
         videos = []
-        metadata = self.get_metadata_by_id(video_id)['fmt_stream_map']
-        for stream_map in metadata:
-            vid = Video(stream_map)
-            videos.append(vid)
-        return videos
+        metadata = self.get_metadata_by_id(video_id)
+        raw_videos = metadata.get('fmt_stream_map')
+
+        for v in raw_videos:
+            video = Video(v['fallback_host'], v['itag'], v['quality'],
+                          v['type'], v['url'])
+            videos.append(video)
+        return sorted(videos)
 
     def get_metadata_by_id(self, video_id):
         """
@@ -128,13 +134,13 @@ class YouTube(object):
         :rtype: dict
         """
 
-        d = dict()
+        dct = {}
         #loop through object key/value yielded from parse_qs iteritems, check
         #if the value contains one item (no child nodes), replace tuple with
         #strings accordingly.
         for key, val in parse_qs(qs).iteritems():
-            d[key] = (val if len(val) > 1 else val[0])
-        return d
+            dct[key] = (val if len(val) > 1 else val[0])
+        return dct
 
     def _request(self, video_id):
         """
@@ -153,7 +159,7 @@ class YouTube(object):
                         video_id=video_id)
         response = urlopen(url)
 
-        if response.getcode() != 200:
+        if response.getcode() is not 200:
             #TODO: raise proper exception if status code is not 200.
             raise
 
@@ -169,45 +175,8 @@ class YouTube(object):
         metadata['fmt_stream_map'] = stream_map
         return metadata
 
-
-class Video(object):
-    """YouTube video instances created by the YouTube factory class.
-    """
-
-    def __init__(self, stream_map):
-        """Initialize instance of Video class
-
-        :param stream_map: The url decoded fmt_stream_map.
-        :type url: dict
-        """
-
-        self._raw_stream_map = stream_map
-        self.itag = stream_map.get('itag')
-        self.url = stream_map.get('url')
-        self.quality = stream_map.get('quality')
-        self.fallback_host = stream_map.get('fallback_host')
-
-        self.content_type = stream_map.get('type')
-        self.mimetype = self._get_mimetype(self.content_type)
-        self.codecs = self._get_codecs(self.content_type)
-
-    def _get_mimetype(self, content_type):
-        mimetype = MIMETYPE_RE.match(content_type)
-        if mimetype:
-            return mimetype.group()
-
-    def _get_codecs(self, content_type):
-        codecs = CODECS_RE.match(content_type)
-        if codecs:
-            return codecs.group()
-
-    def __repr__(self):
-        return '<Video: "{mimetype}" quality: {quality}>'.format(
-            mimetype=self.mimetype, quality=self.quality)
-
-
 if __name__ == '__main__':
     from pprint import pprint
     yt = YouTube("http://www.youtube.com/watch?v=Ik-RsDGPI5Y")
     video_id = yt.video_id
-    print yt.mget_videos_by_id(video_id)
+    pprint(yt.mget_videos_by_id(video_id))
