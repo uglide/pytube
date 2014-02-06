@@ -165,18 +165,28 @@ class YouTube(object):
 
         #Parse the meta data found in the response body using modified version
         #of parse_qs.
-        metadata = self._parse_qs(response.read())
+        body = self._parse_qs(response.read())
+        #Handle the parsing in a separate function primary to make testing
+        #easier.
+        metadata = self.__parse_body(body)
 
-        stream_map = [self._parse_qs(fsm) for fsm in
-                      metadata['url_encoded_fmt_stream_map'].split(',')]
-        for fsm in stream_map:
-            fsm.update({'url': '{url}&signature={sig}'.format(**fsm)})
-
-        metadata['fmt_stream_map'] = stream_map
         return metadata
+
+    def __parse_body(self, body):
+        stream_map = []
+        fsm_csv = body['url_encoded_fmt_stream_map'].split(',')
+        for fsm in fsm_csv:
+            fsm = self._parse_qs(fsm)
+            #Sometimes YouTube likes to serialize the signature in key ``s``
+            if 's' in fsm.keys():
+                fsm['sig'] = fsm['s']
+            fsm.update({'url': '{url}&signature={sig}'.format(**fsm)})
+            stream_map.append(fsm)
+        body['fmt_stream_map'] = stream_map
+        return body
 
 if __name__ == '__main__':
     from pprint import pprint
-    yt = YouTube("http://www.youtube.com/watch?v=Ik-RsDGPI5Y")
+    yt = YouTube("https://www.youtube.com/watch?v=PIb6AZdTr-A")
     video_id = yt.video_id
     pprint(yt.mget_videos_by_id(video_id))
