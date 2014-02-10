@@ -26,7 +26,7 @@ class YouTube(object):
     url = None
     video_id = None
 
-    def __init__(self, url):
+    def __init__(self, url=None):
         """
         Initialize class instance.
 
@@ -185,10 +185,10 @@ class YouTube(object):
         return body
 
 if __name__ == '__main__':
-    from pprint import pprint
     #https://www.youtube.com/watch?v=PIb6AZdTr-A
+    from IPython import embed; embed()
     yt = YouTube("http://www.youtube.com/watch?v=WSLMN6g_Od4")
     video_id = yt.video_id
     videos = yt.mget_videos_by_id(video_id)
-    mp4 = videos[2]
-    print mp4.download('/Users/nficano/Desktop/video.mp4')
+    video = videos[2]
+    video.save('~/Desktop/')

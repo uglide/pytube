@@ -18,7 +18,6 @@ import re
 
 
 class Video(object):
-    chunk_size = 1024
 
     def __init__(self, fallback_host, itag, quality, media_type, url,
                  metadata={}):
@@ -29,12 +28,7 @@ class Video(object):
         self.url = url
         self.metadata = metadata
         self.cb_func = None
-
-    def _get_expiration(self):
-        url = urlparse(self.url)
-        qs = parse_qs(url)
-        timestamp = qs.get('expire')[0]
-        return datetime.fromtimestamp(timestamp)
+        self.chunk_size = 1024
 
     def get_mimetype(self):
         pattern = re.compile('(video\/[A-Za-z0-9-_]*)')
@@ -53,7 +47,7 @@ class Video(object):
         raise NotImplementedError
         self.cb_func = fn
 
-    def download(self, filename):
+    def save(self, filename):
         #TODO: verify filename path
         http_conn = urllib2.urlopen(self.url)
         file_size = http_conn.headers.getheader('Content-Length', 0)
@@ -69,6 +63,12 @@ class Video(object):
                 fp.write(chunk)
                 if self.cb_func:
                     self.cb_func(data_len, file_size)
+
+    def _get_expiration(self):
+        url = urlparse(self.url)
+        qs = parse_qs(url)
+        timestamp = qs.get('expire')[0]
+        return datetime.fromtimestamp(timestamp)
 
     def __repr__(self):
         return "<Video: ('{0}') - quality=\"{1}\">".format(
