@@ -18,6 +18,8 @@ import re
 
 
 class Video(object):
+    chunk_size = 1024
+
     def __init__(self, fallback_host, itag, quality, media_type, url,
                  metadata={}):
         self.fallback_host = fallback_host
@@ -26,8 +28,7 @@ class Video(object):
         self.media_type = media_type
         self.url = url
         self.metadata = metadata
-        self.chunk_size = 1024
-        self.callback = None
+        self.cb_func = None
 
     def _get_expiration(self):
         url = urlparse(self.url)
@@ -50,15 +51,15 @@ class Video(object):
 
     def set_callback(self, fn):
         raise NotImplementedError
-        self.callback = fn
+        self.cb_func = fn
 
     def download(self, filename):
         #TODO: verify filename path
         http_conn = urllib2.urlopen(self.url)
         file_size = http_conn.headers.getheader('Content-Length', 0)
         data_len = 0
-        if self.callback:
-            self.callback(data_len, file_size)
+        if self.cb_func:
+            self.cb_func(data_len, file_size)
         with open(filename, 'w') as fp:
             while True:
                 chunk = http_conn.read(self.chunk_size)
@@ -66,8 +67,8 @@ class Video(object):
                     break
                 data_len += len(chunk)
                 fp.write(chunk)
-                if self.callback:
-                    self.callback(data_len, file_size)
+                if self.cb_func:
+                    self.cb_func(data_len, file_size)
 
     def __repr__(self):
         return "<Video: ('{0}') - quality=\"{1}\">".format(
