@@ -77,7 +77,7 @@ class Video(object):
     def __lt__(self, other):
         #we use itag to determine the highest quality, see
         #http://en.wikipedia.org/wiki/YouTube#Quality_and_codec for more
-        #information
+        #information.
         if type(other) == Video:
             v1 = "{0} {1}".format(self.get_mimetype(), self.itag)
             v2 = "{0} {1}".format(other.get_mimetype(), other.itag)
