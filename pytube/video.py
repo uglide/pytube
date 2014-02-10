@@ -27,7 +27,6 @@ class Video(object):
         self.url = url
         self.metadata = metadata
         self.chunk_size = 1024
-        self.file_size = None
         self.callback = None
 
     def _get_expiration(self):
