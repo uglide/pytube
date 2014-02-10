@@ -9,7 +9,6 @@
 .. moduleauthor:: Nick Ficano <nficano@gmail.com>
 """
 
-#from mimetypes import guess_extension
 from os.path import join
 from urllib import urlencode
 from urllib2 import urlopen
@@ -187,6 +186,9 @@ class YouTube(object):
 
 if __name__ == '__main__':
     from pprint import pprint
-    yt = YouTube("https://www.youtube.com/watch?v=PIb6AZdTr-A")
+    #https://www.youtube.com/watch?v=PIb6AZdTr-A
+    yt = YouTube("http://www.youtube.com/watch?v=WSLMN6g_Od4")
     video_id = yt.video_id
-    pprint(yt.mget_videos_by_id(video_id))
+    videos = yt.mget_videos_by_id(video_id)
+    mp4 = videos[2]
+    print mp4.download('/Users/nficano/Desktop/video.mp4')
