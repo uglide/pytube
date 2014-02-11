@@ -27,7 +27,7 @@ class Video(object):
         self.media_type = media_type
         self.url = url
         self.metadata = metadata
-        self.cb_func = None
+        self.callback = None
         self.chunk_size = 1024
 
     def get_mimetype(self):
@@ -44,25 +44,29 @@ class Video(object):
         return datetime.now() > expiration_date
 
     def set_callback(self, fn):
-        raise NotImplementedError
-        self.cb_func = fn
+        self.callback = fn
 
-    def save(self, filename):
-        #TODO: verify filename path
+    def save(self, filename, callback=None):
+        if callback:
+            self.callback = callback
         http_conn = urllib2.urlopen(self.url)
-        file_size = http_conn.headers.getheader('Content-Length', 0)
+        file_size = int(http_conn.headers.getheader('Content-Length', 0))
         data_len = 0
-        if self.cb_func:
-            self.cb_func(data_len, file_size)
+
+        if self.callback:
+            self.callback(data_len, self.chunk_size, file_size)
+
+        #TODO: verify filename path
         with open(filename, 'w') as fp:
             while True:
                 chunk = http_conn.read(self.chunk_size)
+                data_len += len(chunk)
                 if not chunk:
                     break
-                data_len += len(chunk)
                 fp.write(chunk)
-                if self.cb_func:
-                    self.cb_func(data_len, file_size)
+
+                if self.callback:
+                    self.callback(data_len, self.chunk_size, file_size)
 
     def _get_expiration(self):
         url = urlparse(self.url)
