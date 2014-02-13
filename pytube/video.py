@@ -75,7 +75,7 @@ class Video(object):
         return datetime.fromtimestamp(timestamp)
 
     def __repr__(self):
-        return "<Video: ('{0}') - quality=\"{1}\">".format(
+        return "<Video: quality='{1}' mimetype='{0}'>".format(
             self.get_mimetype(), self.quality)
 
     def __lt__(self, other):
