@@ -181,21 +181,3 @@ class YouTube(object):
             stream_map.append(fsm)
         body['fmt_stream_map'] = stream_map
         return body
-
-if __name__ == '__main__':
-    def chunk_report(bytes_so_far, chunk_size, total_size):
-        import sys
-        percent = float(bytes_so_far) / total_size
-        percent = round(percent*100, 2)
-        sys.stdout.write("Downloaded %d of %d bytes (%0.2f%%)\r" % (
-            bytes_so_far, total_size, percent))
-
-        if bytes_so_far >= total_size:
-            sys.stdout.write('\n')
-    #https://www.youtube.com/watch?v=PIb6AZdTr-A
-    url = 'http://www.youtube.com/watch?v=38peWm76l-U'
-    yt = YouTube(url)
-    video_id = yt.video_id
-    videos = yt.mget_videos_by_id(video_id)
-    video = videos[2]
-    video.save('/Users/nficano/Desktop/video.mp4', callback=chunk_report)
