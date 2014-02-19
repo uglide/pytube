@@ -34,9 +34,9 @@ class YouTube(object):
         self.video_id = None
 
         if url:
-            self.video_id = self.get_id_by_url(url)
+            self.video_id = self.parse_id_from_url(url)
 
-    def get_id_by_url(self, url):
+    def parse_id_from_url(self, url):
         """
         Extracts the video Id from a YouTube url.
 
@@ -54,9 +54,10 @@ class YouTube(object):
         parts = urlparse(url)
         if hasattr(parts, 'query'):
             qs = self._parse_qs(parts.query)
+            #TODO: raise exception if video id cannot be extracted from url
             return qs.get('v')
 
-    def mget_videos_by_id(self, video_id):
+    def get_videos(self, video_id=None):
         """
         multi-get returns a list of object representation of YouTube videos for
         a given video Id.
@@ -66,9 +67,12 @@ class YouTube(object):
         :returns: Video objects
         :rtype: list
         """
-
+        video_id = (video_id if video_id else self.video_id)
+        if not video_id:
+            #TODO: raise exception
+            raise
         videos = []
-        metadata = self.get_metadata_by_id(video_id)
+        metadata = self.get_metadata(video_id)
         raw_videos = metadata.get('fmt_stream_map')
 
         for v in raw_videos:
@@ -77,7 +81,7 @@ class YouTube(object):
             videos.append(video)
         return sorted(videos)
 
-    def get_metadata_by_id(self, video_id):
+    def get_metadata(self, video_id=None):
         """
         Returns the YouTube meta data for a given Id.
 
@@ -86,6 +90,11 @@ class YouTube(object):
         :returns: video meta data
         :rtype: dict
         """
+
+        video_id = (video_id if video_id else self.video_id)
+        if not video_id:
+            #TODO: raise exception
+            raise
 
         return self._request(video_id)
 

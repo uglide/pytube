@@ -12,7 +12,7 @@ from youtube import YouTube
 def main(args):
     yt = YouTube(args.url)
     video_id = yt.video_id
-    videos = yt.mget_videos_by_id(video_id)
+    videos = yt.get_videos(video_id)
     show_list(videos)
 
 
