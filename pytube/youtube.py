@@ -23,29 +23,11 @@ class YouTube(object):
     """PyTube: Lightweight wrapper for downloading YouTube videos
     """
 
-    def __init__(self, url=None):
-        """
-        Initialize class instance.
-
-        :param url: web address to YouTube video
-        :type url: str
-        """
-        self.url = url
-        self.video_id = None
-
-        if url:
+    def __init__(self, url=None, video_id=None):
+        if not video_id:
             self.video_id = self.parse_id_from_url(url)
 
     def parse_id_from_url(self, url):
-        """
-        Extracts the video Id from a YouTube url.
-
-        :param video_id: YouTube url
-        :type video_id: str
-        :returns: YouTube video Id
-        :rtype: str
-        """
-
         #TODO: raise exception for malformed url, no '?v=xxx' found in query
         #string. Also test on url-shortened youtu.be
 
@@ -57,22 +39,9 @@ class YouTube(object):
             #TODO: raise exception if video id cannot be extracted from url
             return qs.get('v')
 
-    def get_videos(self, video_id=None):
-        """
-        multi-get returns a list of object representation of YouTube videos for
-        a given video Id.
-
-        :param video_id: YouTube video Id
-        :type video_id: str
-        :returns: Video objects
-        :rtype: list
-        """
-        video_id = (video_id if video_id else self.video_id)
-        if not video_id:
-            #TODO: raise exception
-            raise
+    def get_videos(self):
         videos = []
-        metadata = self.get_metadata(video_id)
+        metadata = self.get_metadata()
         raw_videos = metadata.get('fmt_stream_map')
 
         for v in raw_videos:
@@ -81,38 +50,10 @@ class YouTube(object):
             videos.append(video)
         return sorted(videos)
 
-    def get_metadata(self, video_id=None):
-        """
-        Returns the YouTube meta data for a given Id.
-
-        :param video_id: YouTube video Id
-        :type video_id: str
-        :returns: video meta data
-        :rtype: dict
-        """
-
-        video_id = (video_id if video_id else self.video_id)
-        if not video_id:
-            #TODO: raise exception
-            raise
-
-        return self._request(video_id)
+    def get_metadata(self):
+        return self._request(self.video_id)
 
     def _url(self, url, *paths, **qs):
-        """
-        Lazily constructs a url given optional paths and query string as
-        keyword args.
-
-        :param url: The base URL (e.g.: http://example.com)
-        :type url: str
-        :param paths: (optional) Path(s) to append to url (e.g.: /path/to/file)
-        :type paths: list
-        :param qs: (optional) build query from keyword args (e.g.: ?foo=bar)
-        :type qs: dict
-        :returns: a formed url
-        :rtype: str
-        """
-
         #Store url as list for easier assembly.
         url_parts = [url]
 
@@ -128,18 +69,8 @@ class YouTube(object):
 
         return ''.join(url_parts)
 
-    def _parse_qs(self, qs):
-        """
-        Parse a query given as a string argument. (Similar to parse_qs method
-        found in urlparse module except this handles the flattening of
-        unnecessary tuples.
-
-        :param qs: uri query string
-        :type qs: str
-        :returns: a flattened dict representation of a query string
-        :rtype: dict
-        """
-
+    @staticmethod
+    def _parse_qs(qs):
         dct = {}
         #loop through object key/value yielded from parse_qs iteritems, check
         #if the value contains one item (no child nodes), replace tuple with
@@ -149,29 +80,18 @@ class YouTube(object):
         return dct
 
     def _request(self, video_id):
-        """
-        Executes request to YouTube v3 service detailpage and handles the
-        response, parsing out the meta data and decodes the format stream
-        map.
-
-        :param video_id: the YouTube video Id
-        :type video_id: str
-        :returns: a dict representation of the metadata
-        :rtype: dict
-        """
-
         #Assemble URL and execute http request.
         url = self._url(BASE_URL, asv=3, el='detailpage', hl='en_US',
                         video_id=video_id)
-        response = urlopen(url)
+        http_conn = urlopen(url)
 
-        if response.getcode() is not 200:
+        if http_conn.getcode() is not 200:
             #TODO: raise proper exception if status code is not 200.
             raise
 
-        #Parse the meta data found in the response body using modified version
+        #Parse the meta data found in the http_conn body using modified version
         #of parse_qs.
-        body = self._parse_qs(response.read())
+        body = self._parse_qs(http_conn.read())
         #Handle the parsing in a separate function primary to make testing
         #easier.
         metadata = self.__parse_body(body)
@@ -183,10 +103,6 @@ class YouTube(object):
         fsm_csv = body['url_encoded_fmt_stream_map'].split(',')
         for fsm in fsm_csv:
             fsm = self._parse_qs(fsm)
-            #Sometimes YouTube likes to serialize the signature in key ``s``
-            if 's' in fsm.keys():
-                fsm['sig'] = fsm['s']
-            fsm.update({'url': '{url}&signature={sig}'.format(**fsm)})
             stream_map.append(fsm)
         body['fmt_stream_map'] = stream_map
         return body
